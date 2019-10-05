@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html>
+{% load static %}
+<head>
+    <title></title>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js'></script>
+    <script src="https://unpkg.com/deck.gl@latest/deckgl.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+
+    <style>
+      body { margin:0; padding:0; }
+      #map { position:absolute; top:0; bottom:0; width:100%; }
+/* Menu Toolbar */
+      #menu {
+        display: block;
+        font-size: 16px;
+        color: #fff;
+        position: absolute;
+        width: 150px;
+        top: 0;
+        right: 10px;
+        padding: 10px;
+        margin-left: 5px;
+        margin-top: 2px;
+        margin-bottom: 10px;
+        margin-right: 5px;
+        z-index: 1;
+        font-family: 'Roboto', sans-serif;
+
+      }
+
+      #menu map-layer{
+      display: block;
+      font-size: 13px;
+      background: rgba(0, 0, 0, .8);
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.10);
+      padding: 10px;
+      z-index: 1;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0,0,0,0.25);
+      text-align: center;
+
+      }
+
+      #menu map-layer:last-child {
+          border: none;
+      }
+
+      #menu map-layer:hover {
+          background-color: #f8f8f8;
+          color: #404040;
+      }
+
+      #menu map-layer.active {
+          background-color: #4c4847;
+          color: #ffffff;
+      }
+
+      #menu map-layer.active:hover {
+          background: #b2afab;
+      }
+
+      /* Dark popup */
+
+      .mapboxgl-popup-content {
+          background-color: #202020;
+          color: #fff;
+          margin-left: 5px;
+          margin-top: 2px;
+          margin-bottom: 2px;
+          margin-right: 5px;
+          z-index: 1000;
+      }
+
+      .mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+      .mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip,
+      .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+          border-top-color: #202020;
+      }
+
+      .mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+      .mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip,
+      .mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+          border-bottom-color: #202020;
+      }
+
+      .mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+          border-left-color: #202020;
+      }
+
+      .mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+          border-right-color: #202020;
+      }
+
+      #popup-menu ul,
+      #menu li {
+          margin: 0;
+          padding: 0;
+          z-index: 100;
+      }
+
+      .mapboxgl-ctrl-group {
+          -webkit-filter: invert(100%);
+      }
+
+      .loader {
+          margin: -10px 0 0 -250px;
+          height: 100px;
+          width: 20%;
+          position: fixed;
+          text-align: center;
+          padding: 1em;
+          top: 50%;
+          left: 50%;
+          margin: 0 auto 1em;
+          z-index: 9999;
+      }
+
+      .legend {
+          background-color: #fff;
+          border-radius: 3px;
+          bottom: 30px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.10);
+          font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+          padding: 10px;
+          position: absolute;
+          right: 10px;
+          z-index: 1;
+      }
+
+      .legend h4 {
+          margin: 0 0 10px;
+      }
+
+      .legend div span {
+          border-radius: 50%;
+          display: inline-block;
+          height: 10px;
+          margin-right: 5px;
+          width: 10px;
+      }
+      /*
+    Set the color of the icon
+  */
+3      svg path,
+      svg rect {
+          fill: #FF6700;
+      }
+      </style>
+</head>
+<body>
+  <nav id="menu">
+    <label><b>LAYERS</b></label>
+  </nav>
+  <div id='map'></div>
+  <!-- CSS STYLING -->
+  <div class="loader loader--style1" title="0" id="loader">
+        <svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="40px" height="40px" viewBox="0 0 40 40" enable-background="new 0 0 40 40" xml:space="preserve">
+            <path opacity="0.2" fill="#000" d="M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946
+    s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634
+    c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z" />
+            <path fill="#000" d="M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0
+    C22.32,8.481,24.301,9.057,26.013,10.047z">
+                <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="0.5s" repeatCount="indefinite" />
+            </path>
+        </svg>
+    </div>
+  <div class='legend'>
+
+  <h4>Population</h4>
+  <div><span style='background-color: #723122'></span>25,000,000</div>
+  <div><span style='background-color: #8B4225'></span>10,000,000</div>
+  <div><span style='background-color: #A25626'></span>7,500,000</div>
+  <div><span style='background-color: #B86B25'></span>5,000,000</div>
+  </div>
+  <script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYnJheWVudHMiLCJhIjoiY2pxc3NsbXJoMDI1aDQ4bW9vaWY1a3p3dCJ9.1FV1am7z-bwT69SVq_gdUw';
+// rich text labels
+//  mapboxgl.setRTLTextPlugin('https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.0/mapbox-gl-rtl-text.js');
+
+  var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v9', // dark
+      // style: 'mapbox://styles/mapbox/satellite-v9', // satellite
+      // style: 'mapbox://styles/mapbox/streets-v10', // stylesheet location
+      center: [136.4711123, -4.9339314],
+      zoom: 5.8,
+      minZoom: 5.5,
+      maxZoom: 20,
+      pitch: 25,
+  });
+
+
+map.on('load', function () {
+
+
+//////////////////SOURCES//////////////////////////////////
+  map.addSource('poly-kabupaten', {
+      'type': 'geojson',
+      'data': '{% url "papua:kabupaten" %}',
+      'tolerance': 1.0
+      });
+
+
+  map.addSource('point-kabupaten-big', {
+      'type': 'geojson',
+     'data': '{% url "papua:kab_big" %}'
+      });
+
+
+  map.addSource('point-ibadah', {
+      'type': 'geojson',
+      'data': '{% url "papua:ibadah" %}',
+      });
+
+  map.addSource('point-pendidikan', {
+      'type': 'geojson',
+      'data': '{% url "papua:pendidikan" %}',
+      });
+
+
+  map.addSource('point-rumahsakit', {
+      'type': 'geojson',
+      'data': '{% url "papua:rumahsakit" %}',
+      });
+
+
+////////////////////////////////DATA////////////////////////////////
+/////////////////////////POLYGON//////////////////////////
+// KABUPATEN
+// dibuat time slider
+map.addLayer({
+  'id': 'Kabupaten',
+  'type': 'fill',
+  'source': 'poly-kabupaten',
+  'layout': {
+    'visibility': 'none',
+  },
+  'paint': {
+    'fill-color': '#949494',
+    'fill-outline-color': '#ebebeb',
+    'fill-opacity': 0.1
+}
+});
+/// nanti diganti jadi line aja. yang ini jadi fil-extrusion
+/// PENDUDUK
+map.addLayer({
+  'id': 'kab-population',
+  'type': 'fill',
+  'source': 'poly-kabupaten',
+  'layout': {
+    'visibility': 'none',
+  },
+  'paint': {
+    'fill-color': [
+        'interpolate', ['linear'], ['get', 'pddk_2010'],
+          0, '#F2F12D',
+          100000, '#EED322',
+          500000, '#E6B71E',
+          5000000, '#DA9C20',
+          10000000, '#CA8323',
+      ],
+    'fill-opacity': 0.75
+  }
+});
+////
+map.addLayer({
+  'id': 'kab-population-1',
+  'type': 'fill',
+  'source': 'poly-kabupaten',
+  'layout': {
+    'visibility': 'none',
+  },
+  'paint': {
+    'fill-color':
+      ["let", "density", ["/", ["get", "pddk_2010"], ["get", "luas_km"]],
+            [
+              "interpolate",
+              ["linear"],
+              ["var", "density"],
+              10,
+              ["to-color", "#edf8e9"],
+              50,
+              ["to-color", "#006d2c"],
+              200,
+              ["to-color", "#fc1b34"]
+              ],
+        ],
+        'fill-opacity': .7
+      }
+      });
+
+/////////////////////////////////////HEATMAP/////////////////////////////////////
+// RELIGION
+map.addLayer({
+    'id': 'Religion',
+    'type': 'circle',
+    'source': 'point-ibadah',
+    'layout': {
+      'visibility': 'none',
+    },
+    'paint': {
+        "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            6, 2,
+            22, 20,
+            ],
+        'circle-color': [
+            'match',
+            ['get', 'remark'],
+            'Masjid', '#ffa600',
+            'Gereja', '#42c9db',
+            'Pura', '#db4848',
+            'Vihara', '#24f22e',
+            /* other */ '#ccc'
+        ],
+        //IF USING HEATMAP
+        'circle-stroke-color': 'white',
+        'circle-stroke-width': 1,
+      // // Transition from heatmap to circle layer by zoom level
+      //   "circle-opacity": [
+      //     "interpolate",
+      //     ["linear"],
+      //     ["zoom"],
+      //     7, 0,
+      //     8, 1
+      //   ],
+  }
+}, 'waterway-label');
+
+
+/// EDUCATION
+/// ALL
+    map.addLayer({
+        'id': 'Education',
+        'type': 'circle',
+        'source': 'point-pendidikan',
+        'layout': {
+          'visibility': 'none',
+        },
+        'paint': {
+            'circle-radius': {
+                'base': 1.75,
+                'stops': [[12, 2], [22, 180]]
+            },
+            'circle-color': [
+                'match',
+                ['get', 'remark'],
+                'Pendidikan Menengah Umum', '#00fff2',
+                'Pendidikan Dasar', '#00ff00',
+                'Pendidikan Menengah Pertama', '#e100ff',
+                /* other */ '#ccc'
+            ]
+        }
+    });
+
+
+  // KESEHATAN
+  //RUMAHSAKIT
+  map.addLayer({
+      'id': 'rs-heatmap',
+      'type': 'heatmap',
+      'source': 'point-rumahsakit',
+      'layout': {
+        'visibility': 'none',
+      },
+      'paint': {
+        'heatmap-weight': 0.5,
+        'heatmap-intensity': [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          5, 1,
+          18, 10,
+          ],
+        // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+        // Begin color ramp at 0-stop with a 0-transparancy color
+        // to create a blur-like effect.
+        'heatmap-color': [
+            "interpolate",
+            ["linear"],
+            ["heatmap-density"],
+            0, "rgba(33,102,172,0)",
+            0.2, "rgb(103,169,207)",
+            0.4, "rgb(209,229,240)",
+            0.6, "rgb(253,219,199)",
+            0.8, "rgb(239,138,98)",
+            1, "rgb(178,24,43)"
+        ],
+        // Adjust the heatmap radius by zoom level
+        "heatmap-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            5, 4,
+            20, 35
+        ],
+        // Transition from heatmap to circle layer by zoom level
+        "heatmap-opacity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            5, 1,
+            15, 0
+        ],
+      }
+    }, 'waterway-label');
+
+
+
+  ///////////////////////////////POINT/////////////////////////////////
+
+  ///KABUPATEN BESAR
+    map.addLayer({
+          'id': 'label-kabupaten-big',
+          'type': 'symbol',
+          'source': 'point-kabupaten-big',
+          'layout': {
+            // 'icon-image': 'circle-11',
+            // 'icon-size': [
+            //   "interpolate", ["linear"], ["zoom"],
+            //   5, 0.5,
+            //   10, 0
+            // ],
+            'text-field': ['get', 'kab'],
+            'text-font': ["Roboto Regular","Arial Unicode MS Regular"],
+            'text-size': {
+                "base": 1.25,
+                "stops": [[6, 12], [12, 26]]
+              },
+            'text-offset': [0, 0.3],
+            'text-anchor': 'top',
+            'text-max-width': 7,
+            // 'text-ignore-placement': true,
+            },
+          'paint': {
+            'text-color': "#e0e0e0",
+            'text-halo-color':'#ffffff',
+            'text-halo-width': 0.2,
+            'icon-color': '#cfcfcf',
+            'icon-halo-color': '#f1f1f1',
+            'icon-halo-width': 0.3,
+            'text-opacity': 1,
+        }
+    });
+
+
+  
+
+
+  }); ///ENDING
+
+////////////SETTINGS AND PANEL//////////////////
+
+// // POPUP
+//   // When a click event occurs on a feature in the places layer, open a popup at the
+//   // location of the feature, with description HTML from its properties.
+//   map.on('click', 'religion-circle', function (e) {
+//       var coordinates = e.features[0].geometry.coordinates.slice();
+//       var description = e.features[0].properties.remark;
+//
+//       // Ensure that if the map is zoomed out such that multiple
+//       // copies of the feature are visible, the popup appears
+//       // over the copy being pointed to.
+//       while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+//       coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+//       }
+//
+//       new mapboxgl.Popup()
+//       .setLngLat(coordinates)
+//       .setHTML(description)
+//       .addTo(map);
+//       });
+//
+//   // Change the cursor to a pointer when the mouse is over the places layer.
+//   map.on('mouseenter', 'religion-circle', function () {
+//   map.getCanvas().style.cursor = 'pointer';
+//   });
+//
+//   // Change it back to a pointer when it leaves.
+//   map.on('mouseleave', 'religion-circle', function () {
+//   map.getCanvas().style.cursor = '';
+//   });
+
+
+// Togggle Layer
+
+var toggleableLayerIds = [ 'Religion', 'Education', 'Kabupaten', 'kab-population', 'kab-population-1','rs-heatmap' ];
+for (var i = 0; i < toggleableLayerIds.length; i++) {
+    var id = toggleableLayerIds[i];
+
+    var link = document.createElement('map-layer');
+    link.href = '#';
+    link.className = 'active';
+    link.textContent = id;
+
+    link.onclick = function (e) {
+        var clickedLayer = this.textContent;
+        e.preventDefault();
+        e.stopPropagation();
+
+        var visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+        if (visibility === 'none') {
+            map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+            this.className = '';
+        } else {
+            this.className = 'active';
+            map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+        }
+        // if (visibility === 'visible') {
+        //     map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+        //     this.className = '';
+        // } else {
+        //     this.className = 'active';
+        //     map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+        // }
+    };
+
+    var layers = document.getElementById('menu');
+    layers.appendChild(link);
+}
+
+
+//Hide loading bar once tiles from geojson are loaded
+map.on('data', function(e) {
+    if (e.dataType === 'source' && e.sourceId === 'poly-kabupaten') {
+        document.getElementById("loader").style.visibility = "hidden";
+    }
+})
+// NAVIGATIONS
+// NAVBAR
+map.addControl(new mapboxgl.NavigationControl(), 'top-left');
+// LOCATE USER
+map.addControl(new mapboxgl.GeolocateControl({
+    positionOptions: {
+      enableHighAccuracy: true
+        },
+      trackUserLocation: true
+        }), 'top-left');
+//SCALE
+var scale = new mapboxgl.ScaleControl({
+    maxWidth: 100,
+    unit: 'metric'
+});
+map.addControl(scale);
+
+scale.setUnit('metric');
+
+  ///FLY TO AND ZOOM
+  // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
+
+  map.on('click', 'label-kabupaten-big', function (e) {
+  map.flyTo({center: e.features[0].geometry.coordinates, zoom: 10.5});
+  });
+
+  // Change the cursor to a pointer when the it enters a feature in the 'symbols' layer.
+  map.on('mouseenter', 'label-kabupaten-big', function () {
+  map.getCanvas().style.cursor = 'pointer';
+  });
+
+
+  // Change it back to a pointer when it leaves.
+  map.on('mouseleave', 'label-kabupaten-big', function () {
+  map.getCanvas().style.cursor = '';
+  });
+
+
+/// dibersihin lagi
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+$icon-size: 55px;
+$dark-overlay: rgba(0,0,0,0.7);
+$primary:#3292a6;
+
+body{
+  overflow-x:hidden;
+}
+
+.navbar{
+  box-shadow: 2px 2px 5px $primary;
+  opacity: 0.9;
+
+  .nav-item{
+    font-size: 1rem;
+    padding-left: 1em !important;
+    padding-right: 1em !important;
+  }
+
+  .nav-item.active{
+    border-left: #444 3px solid;
+  }
+}
+
+.carousel-item{
+  height: 450px;
+}
+
+.carousel-image-1{
+  background: url('../img/img1.jpg');
+  background-size: cover;
+}
+
+.carousel-image-2{
+  background: url('../img/img2.jpg');
+  background-size: cover;
+}
+
+.carousel-image-3{
+  background: url('../img/img3.jpg');
+  background-size: cover;
+}
+
+.fa{
+  font-size: $icon-size;
+}
+
+#home-heading{
+  position: relative;
+  min-height: 200px;
+  background: url('../img/back.jpg');
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  text-align: center;
+  color: #fff;
+}
+
+.dark-overlay{
+  position: absolute;
+  background-color: $dark-overlay;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}

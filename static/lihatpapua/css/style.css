@@ -1,0 +1,102 @@
+/* font-family: 'Lato', sans-serif;
+font-family: 'Sarabun', sans-serif;
+font-family: 'Roboto', sans-serif; */
+
+
+
+body {
+  overflow-x: hidden;
+}
+
+.navbar {
+  color: white;
+}
+
+.navbar .nav-link {
+  font-size: 1.1rem;
+  padding-left: 1em !important;
+  padding-right: 1em !important;
+  font-family: 'Lato', sans-serif;
+}
+
+.navbar .started {
+  font-family: 'Lato', sans-serif;
+}
+
+#showcase {
+  position: relative;
+  background: url("../img/img3.jpg");
+  min-height: 600px;
+}
+
+#showcase .primary-overlay {
+  background: rgba(50, 146, 166, 0.5);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#try-baloon {
+  position: relative;
+  height: 95px;
+  margin-top: -50px;
+  width: 70%;
+}
+
+#introduction {
+  padding-top: 150px;
+  padding-bottom: 100px;
+}
+.hr{
+  padding-bottom: 100px;
+}
+
+#solution {
+  padding-top: 150px;
+  padding-bottom: 100px;
+}
+
+
+.carousel-item {
+  height: 450px;
+}
+
+.carousel-image-1 {
+  background: url("../img/img1.jpg");
+  background-size: cover;
+}
+
+.carousel-image-2 {
+  background: url("../img/img2.jpg");
+  background-size: cover;
+}
+
+.carousel-image-3 {
+  background: url("../img/img3.jpg");
+  background-size: cover;
+}
+
+.fa {
+  font-size: 55px;
+}
+
+#home-heading {
+  position: relative;
+  min-height: 200px;
+  background: url("../img/back.jpg");
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  text-align: center;
+  color: #fff;
+}
+
+.dark-overlay {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.7);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
